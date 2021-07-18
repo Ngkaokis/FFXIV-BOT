@@ -11,12 +11,24 @@ db.once("open", function () {
     console.log("Connection is open...");
 });
 
-let GuideSchema = mongoose.Schema({
+const GuideSchema = mongoose.Schema({
     raid: { type: String, required: true, unique: true },
     guide: { type: String, required: true }
 });
 
-let Guide = mongoose.model("Guide", GuideSchema);
+const ScheduleSchema = mongoose.Schema({
+    date: { type: String, required: true, unique: true },
+    monday: [{ type: String }],
+    tuesday: [{ type: String }],
+    wednesday: [{ type: String }],
+    thursday: [{ type: String }],
+    friday: [{ type: String }],
+    saturday: [{ type: String }],
+    sunday: [{ type: String }]
+})
+
+const Guide = mongoose.model("Guide", GuideSchema);
+const Schedule = mongoose.model("Schedule", ScheduleSchema);
 
 
 bot.on('ready', () => {
@@ -39,7 +51,9 @@ bot.on('message', async (msg) => {
                         msg.chaneel.send('error')
                     }
                     if (guide) {
-                        guide.guide += ' \n' + args[2]
+                        for (let i = 2; i < args.length - 2; i++) {
+                            guide.guide += ' \n' + args[i]
+                        }
                         guide.save(function (err) {
                             if (err) msg.channel.send('save eror')
                             else msg.channel.send('save successfully')
@@ -79,7 +93,10 @@ bot.on('message', async (msg) => {
                         msg.chaneel.send('error')
                     }
                     if (guide) {
-                        guide.guide = args[2]
+                        guide.guide = ""
+                        for (let i = 2; i < args.length - 2; i++) {
+                            guide.guide += ' \n' + args[i]
+                        }
                         guide.save(function (err) {
                             if (err) msg.channel.send('save eror')
                             else msg.channel.send('save successfully')
@@ -100,8 +117,112 @@ bot.on('message', async (msg) => {
             break;
         case 'delete':
             break;
+        case 'makeSchedule':
+            schedule(msg, args, Discord);
+            break;
+        case 'displaySchedule':
+
+            break;
+
     }
 })
+
+
+//helper functions
+const addReactions = (message, reactions) => {
+    reactions.forEach((reaction) => {
+        setTimeout(() => {
+            message.react(reaction)
+        }, 550);
+    })
+}
+
+const weekReaction = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
+
+const schedule = (message, args, Discord) => {
+    Schedule.findOne({ date: args[1] }, function (err, schedule) {
+        if (!schedule) {
+            let e = new Schedule({
+                date: args[1]
+            })
+            e.save();
+        }
+
+    })
+
+    const embed = new Discord.MessageEmbed()
+        .setColor('#304281')
+        .setTitle('WeekSchedule')
+        .addFields(
+            { name: 'Monday', value: '\u200b' },
+            { name: 'Tuesday', value: '\u200b' },
+            { name: 'Wednesday', value: '\u200b' },
+            { name: 'Thursday', value: '\u200b' },
+            { name: 'Friday', value: '\u200b' },
+            { name: 'Saturday', value: '\u200b' },
+            { name: 'Sunday', value: '\u200b' },
+        );
+    message.channel.send(embed).then((message) => {
+        addReactions(message, weekReaction);
+        const filter = (reaction, user) => {
+            return (!user.bot) && (weekReaction.includes(reaction.emoji.name));
+        }
+        const collector = message.createReactionCollector(filter)
+        collector.on('collect', (reaction, user) => scheduleCollector(reaction, user, args[1], message));
+    })
+
+}
+
+const scheduleCollector = (reaction, user, date, msg) => {
+    Schedule.findOne({ date: date }, function (err, schedule) {
+        if (err) {
+            msg.chaneel.send('error')
+        }
+        if (schedule) {
+            if (reaction.emoji.name == '1️⃣') {
+                schedule.monday.push("<@" + user.id + "> ")
+            }
+            if (reaction.emoji.name == '2️⃣') {
+                schedule.tuesday.push("<@" + user.id + "> ")
+            }
+            if (reaction.emoji.name == '3️⃣') {
+                schedule.wednesday.push("<@" + user.id + "> ")
+            }
+            if (reaction.emoji.name == '4️⃣') {
+                schedule.thursday.push("<@" + user.id + "> ")
+            }
+            if (reaction.emoji.name == '5️⃣') {
+                schedule.friday.push("<@" + user.id + "> ")
+            }
+            if (reaction.emoji.name == '6️⃣') {
+                schedule.saturday.push("<@" + user.id + "> ")
+            }
+            if (reaction.emoji.name == '7️⃣') {
+                schedule.sunday.push("<@" + user.id + ">")
+            }
+            schedule.save()
+            const newEmbed = new Discord.MessageEmbed()
+                .setColor('#304281')
+                .setTitle('WeekSchedule')
+                .addFields(
+                    { name: 'Monday', value: '\u200b' + schedule.monday },
+                    { name: 'Tuesday', value: '\u200b' + schedule.tuesday },
+                    { name: 'Wednesday', value: '\u200b' + schedule.wednesday },
+                    { name: 'Thursday', value: '\u200b' + schedule.thursday },
+                    { name: 'Friday', value: '\u200b' + schedule.friday },
+                    { name: 'Saturday', value: '\u200b' + schedule.saturday },
+                    { name: 'Sunday', value: '\u200b' + schedule.sunday },
+                );
+            msg.edit(newEmbed)
+        }
+    })
+
+}
+
+
+
+
+
 
 
 
