@@ -233,8 +233,8 @@ const scheduleCollector = (reaction, user, date, msg) => {
 
 }
 
-const scheduleRemove = (reaction, user, date, msg) => {
-    Schedule.findOne({ date: date }, function (err, schedule) {
+const scheduleRemove = async (reaction, user, date, msg) => {
+    await Schedule.findOne({ date: date }, function (err, schedule) {
         if (err) {
             msg.chaneel.send('error')
         }
