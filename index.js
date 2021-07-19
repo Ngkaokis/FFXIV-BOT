@@ -136,7 +136,7 @@ const addReactions = (message, reactions) => {
 
 const weekReaction = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
 
-const schedule = (message, args, Discord) => {
+const schedule = async (message, args, Discord) => {
     let embed = new Discord.MessageEmbed()
         .setColor('#304281')
         .setTitle('WeekSchedule')
@@ -149,7 +149,8 @@ const schedule = (message, args, Discord) => {
             { name: 'Saturday', value: '\u200b' },
             { name: 'Sunday', value: '\u200b' },
         );
-    Schedule.findOne({ date: args[1] }, function (err, schedule) {
+
+    await Schedule.findOne({ date: args[1] }, function (err, schedule) {
         if (!schedule) {
             let e = new Schedule({
                 date: args[1]
@@ -169,6 +170,7 @@ const schedule = (message, args, Discord) => {
                     { name: 'Saturday', value: '\u200b' + schedule.saturday },
                     { name: 'Sunday', value: '\u200b' + schedule.sunday },
                 );
+
         }
 
     })
@@ -239,7 +241,6 @@ const scheduleRemove = (reaction, user, date, msg) => {
         if (schedule) {
             if (reaction.emoji.name == '1️⃣') {
                 schedule.monday = schedule.monday.filter(reactedUser => reactedUser != "<@" + user.id + ">")
-
             }
             if (reaction.emoji.name == '2️⃣') {
                 schedule.tuesday = schedule.tuesday.filter(reactedUser => reactedUser != "<@" + user.id + ">")
