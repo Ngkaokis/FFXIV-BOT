@@ -18,7 +18,17 @@ module.exports = {
                     .setColor('#304281')
                     .setTitle('Guide List');
                 guideMap.forEach((guide, index) => newEmbed.addField(index + 1, guide))
-                message.channel.send(newEmbed)
+                message.channel.send(newEmbed).then(async () => {
+                    const filter = (user) => { return user.author.id === message.author.id }
+                    try {
+                        let collected = await message.channel.awaitMessages(filter, { max: 1, time: 15000, errors: ['time'] });
+                        let choice = collected.first().content;
+                        message.channel.send(guides[choice - 1].guide);
+                    }
+                    catch (e) {
+                        return message.channel.send('no guide');
+                    };
+                });
             }
             else message.channel.send('no guide')
         })

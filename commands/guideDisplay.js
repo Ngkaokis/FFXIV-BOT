@@ -3,7 +3,7 @@ const Guide = require('../database/guideModel.js')
 
 module.exports = {
     name: 'guide',
-    description: 'this is a raid guid displaying command',
+    description: 'this is a guide displaying command',
     execute(message, args) {
         Guide.findOne({ raid: args[1] }, function (err, guide) {
             if (err) {
