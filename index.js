@@ -26,7 +26,7 @@ const Schedule = require('./database/scheduleModel.js')
 bot.on('ready', async () => {
     console.log("ffxiv bot is online");
     //fetch the last week schedule to continue the function after bot restart
-    let channel = await bot.channels.fetch('846729529863307334')
+    let channel = await bot.channels.fetch('866636222113513482')
     await channel.messages.fetch({limit:1}).then(message => {
         let lastMessage = message.first();
         const filter = (reaction, user) => {
