@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 require('dotenv').config();
-const bot = new Discord.Client();
+const bot = new Discord.Client({ partials: Object.values(Discord.Constants.PartialTypes) });
 const mongoose = require('mongoose');
 const db = mongoose.connection;
 const prefix = process.env.PREFIX;
@@ -12,6 +12,7 @@ for (const file of commandFiles) {
     bot.commands.set(command.name, command);
 }
 
+
 mongoose.connect(process.env.MONGODB_KEY)
 db.on('error', console.error.bind(console, "Connection error:"));
 db.once("open", function () {
@@ -21,28 +22,22 @@ db.once("open", function () {
 const Guide = require('./database/guideModel.js')
 const Schedule = require('./database/scheduleModel.js')
 
-/* const GuideSchema = mongoose.Schema({
-    raid: { type: String, required: true, unique: true },
-    guide: { type: String, required: true }
-});
 
-const ScheduleSchema = mongoose.Schema({
-    date: { type: String, required: true, unique: true },
-    monday: [{ type: String }],
-    tuesday: [{ type: String }],
-    wednesday: [{ type: String }],
-    thursday: [{ type: String }],
-    friday: [{ type: String }],
-    saturday: [{ type: String }],
-    sunday: [{ type: String }]
-})
-
-const Guide = mongoose.model("Guide", GuideSchema);
-const Schedule = mongoose.model("Schedule", ScheduleSchema); */
-
-
-bot.on('ready', () => {
-    console.log("ffxiv bot is online")
+bot.on('ready', async () => {
+    console.log("ffxiv bot is online");
+    //fetch the last week schedule to continue the function after bot restart
+    let channel = await bot.channels.fetch('846729529863307334')
+    await channel.messages.fetch({limit:1}).then(message => {
+        let lastMessage = message.first();
+        const filter = (reaction, user) => {
+            return (!user.bot) && (weekReaction.includes(reaction.emoji.name));
+        }
+        const collector = lastMessage.createReactionCollector(filter, { dispose: true });
+        const date = lastMessage.embeds[0].title.split(' ')[1]
+        collector.on('collect', (reaction, user) => scheduleCollector(reaction, user, date, lastMessage, Discord));
+        collector.on('remove', (reaction, user) => scheduleRemove(reaction, user, date, lastMessage, Discord))
+        
+    })
 })
 
 bot.on('message', async (msg) => {
@@ -74,70 +69,33 @@ bot.on('message', async (msg) => {
 })
 
 /* 
-//helper functions
-const addReactions = (message, reactions) => {
-    reactions.forEach((reaction) => {
-        setTimeout(() => {
-            message.react(reaction)
-        }, 550);
-    })
-}
+bot.on('messageReactionAdd', async(reaction, user)=>{
+    if (reaction.message.partial) await reaction.message.fetch();
+    let message = reaction.message
+    if(reaction.message.channel.id === "865911002566754307"){
+        const filter = (reaction, user) => {
+            return (!user.bot) && (weekReaction.includes(reaction.emoji.name));
+        }
+        const collector = message.createReactionCollector(filter, { dispose: true });
+        collector.on('collect', (reaction, user) => scheduleCollector(reaction, user, args[1], message, Discord));
+        collector.on('remove', (reaction, user) => scheduleRemove(reaction, user, args[1], message, Discord))
+    }
+})
 
+bot.on('messageReactionRemove', async (reaction, user) => {
+    if (reaction.message.partial) await reaction.message.fetch();
+    if (user.partial) await user.fetch();
+
+});
+*/
+
+
+bot.login(process.env.TOKEN);
+
+//helper function
 const weekReaction = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
 
-const schedule = async (message, args, Discord) => {
-    let embed = new Discord.MessageEmbed()
-        .setColor('#304281')
-        .setTitle('WeekSchedule')
-        .addFields(
-            { name: 'Monday 0 people', value: '\u200b' },
-            { name: 'Tuesday 0 people', value: '\u200b' },
-            { name: 'Wednesday 0 people', value: '\u200b' },
-            { name: 'Thursday 0 people', value: '\u200b' },
-            { name: 'Friday 0 people', value: '\u200b' },
-            { name: 'Saturday 0 people', value: '\u200b' },
-            { name: 'Sunday 0 people', value: '\u200b' },
-        );
-
-    await Schedule.findOne({ date: args[1] }, function (err, schedule) {
-        if (!schedule) {
-            let e = new Schedule({
-                date: args[1]
-            })
-            e.save();
-        }
-        else {
-            embed = new Discord.MessageEmbed()
-                .setColor('#304281')
-                .setTitle('WeekSchedule')
-                .addFields(
-                    { name: 'Monday ' + schedule.monday.length + " people", value: '\u200b' + schedule.monday },
-                    { name: 'Tuesday ' + schedule.tuesday.length + " people", value: '\u200b' + schedule.tuesday },
-                    { name: 'Wednesday ' + schedule.wednesday.length + " people", value: '\u200b' + schedule.wednesday },
-                    { name: 'Thursday ' + schedule.thursday.length + " people", value: '\u200b' + schedule.thursday },
-                    { name: 'Friday ' + schedule.friday.length + " people", value: '\u200b' + schedule.friday },
-                    { name: 'Saturday ' + schedule.saturday.length + " people", value: '\u200b' + schedule.saturday },
-                    { name: 'Sunday ' + schedule.sunday.length + " people", value: '\u200b' + schedule.sunday },
-                );
-
-        }
-        message.channel.send(embed).then((message) => {
-            addReactions(message, weekReaction);
-            const filter = (reaction, user) => {
-                return (!user.bot) && (weekReaction.includes(reaction.emoji.name));
-            }
-            const collector = message.createReactionCollector(filter, { dispose: true });
-            collector.on('collect', (reaction, user) => scheduleCollector(reaction, user, args[1], message));
-            collector.on('remove', (reaction, user) => scheduleRemove(reaction, user, args[1], message))
-        })
-
-    })
-
-
-
-}
-
-const scheduleCollector = async (reaction, user, date, msg) => {
+const scheduleCollector = async (reaction, user, date, msg, Discord) => {
     await Schedule.findOne({ date: date }, function (err, schedule) {
         if (err) {
             msg.chaneel.send('error')
@@ -167,7 +125,7 @@ const scheduleCollector = async (reaction, user, date, msg) => {
             schedule.save()
             const newEmbed = new Discord.MessageEmbed()
                 .setColor('#304281')
-                .setTitle('WeekSchedule')
+                .setTitle('weekschedule ' +  date)
                 .addFields(
                     { name: 'Monday ' + schedule.monday.length + " people", value: '\u200b' + schedule.monday },
                     { name: 'Tuesday ' + schedule.tuesday.length + " people", value: '\u200b' + schedule.tuesday },
@@ -183,7 +141,7 @@ const scheduleCollector = async (reaction, user, date, msg) => {
 
 }
 
-const scheduleRemove = async (reaction, user, date, msg) => {
+const scheduleRemove = async (reaction, user, date, msg, Discord) => {
     await Schedule.findOne({ date: date }, function (err, schedule) {
         if (err) {
             msg.chaneel.send('error')
@@ -213,7 +171,7 @@ const scheduleRemove = async (reaction, user, date, msg) => {
             schedule.save()
             const newEmbed = new Discord.MessageEmbed()
                 .setColor('#304281')
-                .setTitle('WeekSchedule')
+                .setTitle('weekschedule ' +  date)
                 .addFields(
                     { name: 'Monday ' + schedule.monday.length + " people", value: '\u200b' + schedule.monday },
                     { name: 'Tuesday ' + schedule.tuesday.length + " people", value: '\u200b' + schedule.tuesday },
@@ -226,8 +184,4 @@ const scheduleRemove = async (reaction, user, date, msg) => {
             msg.edit(newEmbed)
         }
     })
-
-} */
-
-
-bot.login(process.env.TOKEN);
+}
