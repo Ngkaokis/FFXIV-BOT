@@ -12,34 +12,39 @@ const addReactions = (message, reactions) => {
 
 const weekReaction = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
 
-const missRole = async (schedule) => {
-    let missArray = []
-    let role = [[], [], [], [], [], [], []]
-    await Team.findOne({}, function (err, team) {
-        if (err) {
-            msg.chaneel.send('error')
-        }
-        let teamArray = [team.MT, team.ST, team.H1, team.H2, team.D1, team.D2, team.D3, team.D4];
-        let teamObject = {
-            MT: team.MT,
-            ST: team.ST,
-            H1: team.H1,
-            H2: team.H2,
-            D1: team.D1,
-            D2: team.D2,
-            D3: team.D3,
-            D4: team.D4
-        }
-        missArray.push(teamArray.filter(role => !schedule.monday.includes(role)))
-        missArray.push(teamArray.filter(role => !schedule.tuesday.includes(role)))
-        missArray.push(teamArray.filter(role => !schedule.wednesday.includes(role)))
-        missArray.push(teamArray.filter(role => !schedule.thursday.includes(role)))
-        missArray.push(teamArray.filter(role => !schedule.friday.includes(role)))
-        missArray.push(teamArray.filter(role => !schedule.saturday.includes(role)))
-        missArray.push(teamArray.filter(role => !schedule.sunday.includes(role)))
-        missArray.forEach((day, index) => day.forEach((teammate) => role[index].push(Object.keys(teamObject).find(key => teamObject[key] === teammate))))
+const missRole = (schedule) => {
+    //create promise if Mongoose query includes callback for async
+    return new Promise((resolve, reject) => {
+        Team.findOne({}, function (err, team) {
+            let missArray = []
+            let role = [[], [], [], [], [], [], []]
+            if (err) {
+                msg.chaneel.send('error')
+            }
+            let teamArray = [team.MT, team.ST, team.H1, team.H2, team.D1, team.D2, team.D3, team.D4];
+            let teamObject = {
+                MT: team.MT,
+                ST: team.ST,
+                H1: team.H1,
+                H2: team.H2,
+                D1: team.D1,
+                D2: team.D2,
+                D3: team.D3,
+                D4: team.D4
+            }
+            missArray.push(teamArray.filter(role => !schedule.monday.includes(role)))
+            missArray.push(teamArray.filter(role => !schedule.tuesday.includes(role)))
+            missArray.push(teamArray.filter(role => !schedule.wednesday.includes(role)))
+            missArray.push(teamArray.filter(role => !schedule.thursday.includes(role)))
+            missArray.push(teamArray.filter(role => !schedule.friday.includes(role)))
+            missArray.push(teamArray.filter(role => !schedule.saturday.includes(role)))
+            missArray.push(teamArray.filter(role => !schedule.sunday.includes(role)))
+            console.log("miss array: " + missArray)
+            missArray.forEach((day, index) => day.forEach((teammate) => role[index].push(Object.keys(teamObject).find(key => teamObject[key] === teammate))))
+            console.log("miss role: " + role)
+            resolve(role)
+        })
     })
-    return role
 }
 
 const createNewEmbed = async (schedule, Discord, date) => {
