@@ -123,6 +123,7 @@ const missRole = async (schedule) => {
         missArray.push(teamArray.filter(role => !schedule.friday.includes(role)))
         missArray.push(teamArray.filter(role => !schedule.saturday.includes(role)))
         missArray.push(teamArray.filter(role => !schedule.sunday.includes(role)))
+        console.log("miss array: " + missArray)
         missArray.forEach((day, index) => day.forEach((teammate) => role[index].push(Object.keys(teamObject).find(key => teamObject[key] === teammate))))
     })
     console.log("miss roles: " + role)
