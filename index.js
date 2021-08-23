@@ -125,11 +125,13 @@ const missRole = async (schedule) => {
         missArray.push(teamArray.filter(role => !schedule.sunday.includes(role)))
         missArray.forEach((day, index) => day.forEach((teammate) => role[index].push(Object.keys(teamObject).find(key => teamObject[key] === teammate))))
     })
+    console.log("miss roles: " + role)
     return role
 }
 
 const createNewEmbed = async (schedule, Discord, date) => {
     let missArray = await missRole(schedule);
+    console.log("test await: " + missArray)
     const newEmbed = new Discord.MessageEmbed()
         .setColor('#304281')
         .setTitle('weekschedule ' + date)
