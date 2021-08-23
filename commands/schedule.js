@@ -1,4 +1,5 @@
 const Schedule = require('../database/scheduleModel.js')
+const Team = require('../database/teamModel.js')
 
 
 const addReactions = (message, reactions) => {
@@ -11,8 +12,55 @@ const addReactions = (message, reactions) => {
 
 const weekReaction = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
 
+const missRole = async (schedule) => {
+    let missArray = []
+    let role = [[], [], [], [], [], [], []]
+    await Team.findOne({}, function (err, team) {
+        if (err) {
+            msg.chaneel.send('error')
+        }
+        let teamArray = [team.MT, team.ST, team.H1, team.H2, team.D1, team.D2, team.D3, team.D4];
+        let teamObject = {
+            MT: team.MT,
+            ST: team.ST,
+            H1: team.H1,
+            H2: team.H2,
+            D1: team.D1,
+            D2: team.D2,
+            D3: team.D3,
+            D4: team.D4
+        }
+        missArray.push(teamArray.filter(role => !schedule.monday.includes(role)))
+        missArray.push(teamArray.filter(role => !schedule.tuesday.includes(role)))
+        missArray.push(teamArray.filter(role => !schedule.wednesday.includes(role)))
+        missArray.push(teamArray.filter(role => !schedule.thursday.includes(role)))
+        missArray.push(teamArray.filter(role => !schedule.friday.includes(role)))
+        missArray.push(teamArray.filter(role => !schedule.saturday.includes(role)))
+        missArray.push(teamArray.filter(role => !schedule.sunday.includes(role)))
+        missArray.forEach((day, index) => day.forEach((teammate) => role[index].push(Object.keys(teamObject).find(key => teamObject[key] === teammate))))
+    })
+    return role
+}
+
+const createNewEmbed = async (schedule, Discord, date) => {
+    let missArray = await missRole(schedule);
+    const newEmbed = new Discord.MessageEmbed()
+        .setColor('#304281')
+        .setTitle('weekschedule ' + date)
+        .addFields(
+            { name: 'Monday ' + schedule.monday.length + " people  miss: " + missArray[0], value: '\u200b' + schedule.monday },
+            { name: 'Tuesday ' + schedule.tuesday.length + " people  miss: " + missArray[1], value: '\u200b' + schedule.tuesday },
+            { name: 'Wednesday ' + schedule.wednesday.length + " people  miss: " + missArray[2], value: '\u200b' + schedule.wednesday },
+            { name: 'Thursday ' + schedule.thursday.length + " people  miss: " + missArray[3], value: '\u200b' + schedule.thursday },
+            { name: 'Friday ' + schedule.friday.length + " people  miss: " + missArray[4], value: '\u200b' + schedule.friday },
+            { name: 'Saturday ' + schedule.saturday.length + " people  miss: " + missArray[5], value: '\u200b' + schedule.saturday },
+            { name: 'Sunday ' + schedule.sunday.length + " people  miss: " + missArray[6], value: '\u200b' + schedule.sunday },
+        );
+    return newEmbed;
+}
+
 const scheduleCollector = async (reaction, user, date, msg, Discord) => {
-    await Schedule.findOne({ date: date }, function (err, schedule) {
+    await Schedule.findOne({ date: date }, async function (err, schedule) {
         if (err) {
             msg.chaneel.send('error')
         }
@@ -39,18 +87,7 @@ const scheduleCollector = async (reaction, user, date, msg, Discord) => {
                 schedule.sunday.push("<@" + user.id + ">")
             }
             schedule.save()
-            const newEmbed = new Discord.MessageEmbed()
-                .setColor('#304281')
-                .setTitle('weekschedule ' +  date)
-                .addFields(
-                    { name: 'Monday ' + schedule.monday.length + " people", value: '\u200b' + schedule.monday },
-                    { name: 'Tuesday ' + schedule.tuesday.length + " people", value: '\u200b' + schedule.tuesday },
-                    { name: 'Wednesday ' + schedule.wednesday.length + " people", value: '\u200b' + schedule.wednesday },
-                    { name: 'Thursday ' + schedule.thursday.length + " people", value: '\u200b' + schedule.thursday },
-                    { name: 'Friday ' + schedule.friday.length + " people", value: '\u200b' + schedule.friday },
-                    { name: 'Saturday ' + schedule.saturday.length + " people", value: '\u200b' + schedule.saturday },
-                    { name: 'Sunday ' + schedule.sunday.length + " people", value: '\u200b' + schedule.sunday },
-                );
+            const newEmbed = await createNewEmbed(schedule, Discord, date)
             msg.edit(newEmbed)
         }
     })
@@ -58,7 +95,7 @@ const scheduleCollector = async (reaction, user, date, msg, Discord) => {
 }
 
 const scheduleRemove = async (reaction, user, date, msg, Discord) => {
-    await Schedule.findOne({ date: date }, function (err, schedule) {
+    await Schedule.findOne({ date: date }, async function (err, schedule) {
         if (err) {
             msg.chaneel.send('error')
         }
@@ -85,18 +122,7 @@ const scheduleRemove = async (reaction, user, date, msg, Discord) => {
                 schedule.sunday = schedule.sunday.filter(reactedUser => reactedUser != "<@" + user.id + ">")
             }
             schedule.save()
-            const newEmbed = new Discord.MessageEmbed()
-                .setColor('#304281')
-                .setTitle('weekschedule ' +  date)
-                .addFields(
-                    { name: 'Monday ' + schedule.monday.length + " people", value: '\u200b' + schedule.monday },
-                    { name: 'Tuesday ' + schedule.tuesday.length + " people", value: '\u200b' + schedule.tuesday },
-                    { name: 'Wednesday ' + schedule.wednesday.length + " people", value: '\u200b' + schedule.wednesday },
-                    { name: 'Thursday ' + schedule.thursday.length + " people", value: '\u200b' + schedule.thursday },
-                    { name: 'Friday ' + schedule.friday.length + " people", value: '\u200b' + schedule.friday },
-                    { name: 'Saturday ' + schedule.saturday.length + " people", value: '\u200b' + schedule.saturday },
-                    { name: 'Sunday ' + schedule.sunday.length + " people", value: '\u200b' + schedule.sunday },
-                );
+            const newEmbed = await createNewEmbed(schedule, Discord, date)
             msg.edit(newEmbed)
         }
     })
@@ -108,40 +134,17 @@ module.exports = {
     async execute(message, args, Discord) {
         if (!args[1]) msg.channel.send('add date please')
         else {
-            let embed = new Discord.MessageEmbed()
-                .setColor('#304281')
-                .setTitle('weekschedule ' +  args[1])
-                .addFields(
-                    { name: 'Monday 0 people', value: '\u200b' },
-                    { name: 'Tuesday 0 people', value: '\u200b' },
-                    { name: 'Wednesday 0 people', value: '\u200b' },
-                    { name: 'Thursday 0 people', value: '\u200b' },
-                    { name: 'Friday 0 people', value: '\u200b' },
-                    { name: 'Saturday 0 people', value: '\u200b' },
-                    { name: 'Sunday 0 people', value: '\u200b' },
-                );
 
-            await Schedule.findOne({ date: args[1] }, function (err, schedule) {
+            await Schedule.findOne({ date: args[1] }, async function (err, schedule) {
                 if (!schedule) {
                     let e = new Schedule({
                         date: args[1]
                     })
                     e.save();
+                    embed = await createNewEmbed(e, Discord)
                 }
                 else {
-                    embed = new Discord.MessageEmbed()
-                        .setColor('#304281')
-                        .setTitle('weekschedule ' +  args[1])
-                        .addFields(
-                            { name: 'Monday ' + schedule.monday.length + " people", value: '\u200b' + schedule.monday },
-                            { name: 'Tuesday ' + schedule.tuesday.length + " people", value: '\u200b' + schedule.tuesday },
-                            { name: 'Wednesday ' + schedule.wednesday.length + " people", value: '\u200b' + schedule.wednesday },
-                            { name: 'Thursday ' + schedule.thursday.length + " people", value: '\u200b' + schedule.thursday },
-                            { name: 'Friday ' + schedule.friday.length + " people", value: '\u200b' + schedule.friday },
-                            { name: 'Saturday ' + schedule.saturday.length + " people", value: '\u200b' + schedule.saturday },
-                            { name: 'Sunday ' + schedule.sunday.length + " people", value: '\u200b' + schedule.sunday },
-                        );
-
+                    embed = await createNewEmbed(schedule, Discord, args[1])
                 }
                 message.channel.send(embed).then((message) => {
                     addReactions(message, weekReaction);
