@@ -101,7 +101,7 @@ const weekReaction = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6�
 const missRole = (schedule) => {
     //create promise if Mongoose query includes callback for async
     return new Promise((resolve, reject) => {
-        Team.findOne({}, function (err, team) {
+        Team.findOne({ }, function (err, team) {
             let missArray = []
             let role = [[], [], [], [], [], [], []]
             if (err) {
@@ -159,25 +159,25 @@ const scheduleCollector = async (reaction, user, date, msg, Discord) => {
         }
         if (schedule) {
             if (reaction.emoji.name == '1️⃣') {
-                schedule.monday.push("<@" + user.id + ">")
+                if (!schedule.monday.includes("<@" + user.id + ">")) schedule.monday.push("<@" + user.id + ">")
             }
             if (reaction.emoji.name == '2️⃣') {
-                schedule.tuesday.push("<@" + user.id + ">")
+                if (!schedule.tuesday.includes("<@" + user.id + ">")) schedule.tuesday.push("<@" + user.id + ">")
             }
             if (reaction.emoji.name == '3️⃣') {
-                schedule.wednesday.push("<@" + user.id + ">")
+                if (!schedule.wednesday.includes("<@" + user.id + ">")) schedule.wednesday.push("<@" + user.id + ">")
             }
             if (reaction.emoji.name == '4️⃣') {
-                schedule.thursday.push("<@" + user.id + ">")
+                if (!schedule.thursday.includes("<@" + user.id + ">")) schedule.thursday.push("<@" + user.id + ">")
             }
             if (reaction.emoji.name == '5️⃣') {
-                schedule.friday.push("<@" + user.id + ">")
+                if (!schedule.friday.includes("<@" + user.id + ">")) schedule.friday.push("<@" + user.id + ">")
             }
             if (reaction.emoji.name == '6️⃣') {
-                schedule.saturday.push("<@" + user.id + ">")
+                if (!schedule.saturday.includes("<@" + user.id + ">")) schedule.saturday.push("<@" + user.id + ">")
             }
             if (reaction.emoji.name == '7️⃣') {
-                schedule.sunday.push("<@" + user.id + ">")
+                if (!schedule.sunday.includes("<@" + user.id + ">")) schedule.sunday.push("<@" + user.id + ">")
             }
             schedule.save()
             const newEmbed = await createNewEmbed(schedule, Discord, date)
