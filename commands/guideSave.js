@@ -22,13 +22,15 @@ module.exports = {
                     })
                 }
                 else {
+                    let guides = []
+                    for (let i = 2; i < args.length; i++) {
+                        guides.push(args[i])
+                    }
                     let e = new Guide({
                         raid: args[1],
-                        guide: []
+                        guide: guides
                     })
-                    for (let i = 2; i < args.length; i++) {
-                        e.guide[e.guide.length + (i - 2)] = args[i]
-                    }
+
                     e.save(function (err) {
                         if (err) message.channel.send('save error')
                         else message.channel.send('save successfully')
