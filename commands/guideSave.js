@@ -10,24 +10,27 @@ module.exports = {
         else {
             Guide.findOne({ raid: args[1] }, function (err, guide) {
                 if (err) {
-                    message.chaneel.send('error')
+                    message.channel.send('error')
                 }
                 if (guide) {
                     for (let i = 2; i < args.length; i++) {
                         guide.guide[guide.guide.length + (i - 2)] = args[i]
                     }
                     guide.save(function (err) {
-                        if (err) message.channel.send('save eror')
+                        if (err) message.channel.send('save error')
                         else message.channel.send('save successfully')
                     })
                 }
                 else {
                     let e = new Guide({
                         raid: args[1],
-                        guide: args[2]
+                        guide: []
                     })
+                    for (let i = 2; i < args.length; i++) {
+                        e.guide[e.guide.length + (i - 2)] = args[i]
+                    }
                     e.save(function (err) {
-                        if (err) message.channel.send('save eror')
+                        if (err) message.channel.send('save error')
                         else message.channel.send('save successfully')
                     })
                 }
