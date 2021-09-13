@@ -16,6 +16,8 @@ module.exports = {
                     for (let i = 2; i < args.length; i++) {
                         guide.guide[guide.guide.length + (i - 2)] = args[i]
                     }
+                    // can't detect changes of array
+                    guide.markModified('guide')
                     guide.save(function (err) {
                         if (err) message.channel.send('save error')
                         else message.channel.send('save successfully')
